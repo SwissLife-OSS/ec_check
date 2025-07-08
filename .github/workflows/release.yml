@@ -1,6 +1,6 @@
 ---
 
-name: goreleaser
+name: release
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  goreleaser:
+  release:
     name: Release ec_check
     runs-on: ubuntu-latest
 
@@ -24,11 +24,24 @@ jobs:
         with:
           go-version: "stable"
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+      - name: Build binaries
+        run: |
+          make build
+
+      - name: Upload for Linux
+        uses: actions/upload-artifact@v4
         with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: Linux
+          path: bin/*linux*
+
+      - name: Upload for MacOS
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: bin/*macos*
+
+      - name: Upload for Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows
+          path: bin/*windows*
