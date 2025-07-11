@@ -3,10 +3,13 @@
 name: release
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+  release:
+    types:
+      - published
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   release:
@@ -28,20 +31,15 @@ jobs:
         run: |
           make build
 
-      - name: Upload for Linux
-        uses: actions/upload-artifact@v4
-        with:
-          name: Linux
-          path: bin/*linux*
-
-      - name: Upload for MacOS
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos
-          path: bin/*macos*
-
-      - name: Upload for Windows
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windows
-          path: bin/*windows*
+      - name: Upload release assets
+        run: |
+            cd ${{github.workspace}}
+            gh release upload ${{github.event.release.tag_name}} ./bin/ec_check.linux.amd64
+            gh release upload ${{github.event.release.tag_name}} ./bin/ec_check.linux.arm64
+            gh release upload ${{github.event.release.tag_name}} ./bin/ec_check.macos.amd64
+            gh release upload ${{github.event.release.tag_name}} ./bin/ec_check.macos.arm64
+            gh release upload ${{github.event.release.tag_name}} ./bin/ec_check.windows.amd64.exe
+            gh release upload ${{github.event.release.tag_name}} ./bin/ec_check.windows.arm64.exe
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
