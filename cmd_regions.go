@@ -274,7 +274,7 @@ func listRegions(ctx context.Context, cmd *cli.Command) error {
 
 func isRegionValid(region string) bool {
 	for _, r := range allRegions {
-		if r.name == region {
+		if r.region == region {
 			return true
 		}
 	}
