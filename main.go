@@ -80,6 +80,75 @@ func run(ctx context.Context, args []string) error {
 				Action: downscale,
 			},
 			{
+				Name:  "ilm",
+				Usage: "commands to interact with ilm managed indices",
+				Commands: []*cli.Command{
+					{
+						Name:  "list",
+						Usage: "list ilm managed indices filtered by phase",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "phase",
+								Aliases: []string{"p"},
+								Usage:   "Filter to only include indices in the given phase",
+							},
+							&cli.StringSliceFlag{
+								Name:    "sort",
+								Aliases: []string{"s"},
+								Usage:   "Sort indices by the given columns, allowed columns are: age, size",
+							},
+							&cli.StringFlag{
+								Name:  "min-size",
+								Usage: "Minimum size of index in order to be contained in the result, supported units: k, m, g, t, p",
+							},
+							&cli.IntFlag{
+								Name:  "min-age-days",
+								Usage: "Minimum age of index in days in order to be contained in the result",
+							},
+						},
+						Action: ilmList,
+					},
+					{
+						Name:  "move",
+						Usage: "move ilm managed index to a different phase",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "force",
+								Aliases: []string{"f"},
+								Usage:   "Try to move the index to the new phase even with pre condition checks failing",
+							},
+						},
+						Action: ilmMove,
+					},
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "deployment",
+						Aliases:  []string{"d"},
+						Usage:    "Name of the deployment in Elastic Cloud, e.g. my-deployment",
+						Local:    true,
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:  "password",
+						Usage: "Password used to authenticate against Elasticsearch",
+						Local: true,
+					},
+					&cli.StringFlag{
+						Name:     "region",
+						Aliases:  []string{"r"},
+						Usage:    "Deployment region of the Elastic Cloud deployment, e.g. azure-westeurope",
+						Local:    true,
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:  "username",
+						Usage: "Username used to authenticate against Elasticsearch",
+						Local: true,
+					},
+				},
+			},
+			{
 				Name:  "profiles",
 				Usage: "return list of available profiles in a given region",
 				Flags: []cli.Flag{
