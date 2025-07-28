@@ -67,6 +67,11 @@ func (r Recommendation) String() string {
 		return str.String()
 	}
 
+	if r.currentConsumption > r.smallerDiskTotal {
+		str.WriteString("Data does not fit into next smaller configuration.")
+		return str.String()
+	}
+
 	str.WriteString(fmt.Sprintf("Next smaller: %d nodes with %s disk (%s memory) each = %s total\n", r.smallerNodes, units.BytesSize(r.smallerDiskPerNode), units.BytesSize(r.smallerMemoryPerNode), units.BytesSize(r.smallerDiskTotal)))
 
 	freeAfterDownsize := "does not fit"
@@ -78,7 +83,7 @@ func (r Recommendation) String() string {
 
 	str.WriteString(fmt.Sprintf("Free space after downsize: %s (%s)\n", freeAfterDownsize, freeAfterDownsizePct))
 
-	str.WriteString(fmt.Sprintf("Downsize of tier recommended: %t\n", r.isDownscalingRecommended))
+	str.WriteString(fmt.Sprintf("Downsize of tier recommended: %t", r.isDownscalingRecommended))
 
 	return str.String()
 }
@@ -101,7 +106,7 @@ func (r Recommendations) String() string {
 	str := strings.Builder{}
 	for _, recommendation := range mapOrderedByKey(r) {
 		str.WriteString(recommendation.String())
-		str.WriteByte('\n')
+		str.WriteString("\n\n")
 	}
 
 	return str.String()
