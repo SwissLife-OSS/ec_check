@@ -25,13 +25,6 @@ func run(ctx context.Context, args []string) error {
 				Name:  "downscale",
 				Usage: "calculate, if downscaling of an EC deployment is feasible based on current disk consumption",
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "deployment",
-						Aliases:  []string{"d"},
-						Usage:    "Name of the deployment in Elastic Cloud, e.g. my-deployment",
-						Local:    true,
-						Required: true,
-					},
 					&cli.BoolFlag{
 						Name:    "exit-code",
 						Aliases: []string{"e"},
@@ -43,11 +36,6 @@ func run(ctx context.Context, args []string) error {
 						Name:  "headroom-pct",
 						Usage: "Required available headroom in percent after downscale for the downscale to be recommended",
 						Value: 25.0,
-						Local: true,
-					},
-					&cli.StringFlag{
-						Name:  "password",
-						Usage: "Password used to authenticate against Elasticsearch",
 						Local: true,
 					},
 					&cli.StringFlag{
@@ -63,18 +51,6 @@ func run(ctx context.Context, args []string) error {
 						Usage:   "With this flag provided, downscaling recommendation will also include changing the number of zones (not recommended by Elastic)",
 						Value:   false,
 						Local:   true,
-					},
-					&cli.StringFlag{
-						Name:     "region",
-						Aliases:  []string{"r"},
-						Usage:    "Deployment region of the Elastic Cloud deployment, e.g. azure-westeurope",
-						Local:    true,
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:  "username",
-						Usage: "Username used to authenticate against Elasticsearch",
-						Local: true,
 					},
 				},
 				Action: downscale,
@@ -121,32 +97,6 @@ func run(ctx context.Context, args []string) error {
 						Action: ilmMove,
 					},
 				},
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "deployment",
-						Aliases:  []string{"d"},
-						Usage:    "Name of the deployment in Elastic Cloud, e.g. my-deployment",
-						Local:    true,
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:  "password",
-						Usage: "Password used to authenticate against Elasticsearch",
-						Local: true,
-					},
-					&cli.StringFlag{
-						Name:     "region",
-						Aliases:  []string{"r"},
-						Usage:    "Deployment region of the Elastic Cloud deployment, e.g. azure-westeurope",
-						Local:    true,
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:  "username",
-						Usage: "Username used to authenticate against Elasticsearch",
-						Local: true,
-					},
-				},
 			},
 			{
 				Name:  "profiles",
@@ -169,6 +119,26 @@ func run(ctx context.Context, args []string) error {
 			},
 		},
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "deployment",
+				Aliases:  []string{"d"},
+				Usage:    "Name of the deployment in Elastic Cloud, e.g. my-deployment",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "password",
+				Usage: "Password used to authenticate against Elasticsearch",
+			},
+			&cli.StringFlag{
+				Name:     "region",
+				Aliases:  []string{"r"},
+				Usage:    "Deployment region of the Elastic Cloud deployment, e.g. azure-westeurope",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "username",
+				Usage: "Username used to authenticate against Elasticsearch",
+			},
 			&cli.BoolFlag{
 				Name:    "verbose",
 				Aliases: []string{"v"},
