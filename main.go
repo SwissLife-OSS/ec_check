@@ -25,29 +25,18 @@ func run(ctx context.Context, args []string) error {
 				Name:  "downscale",
 				Usage: "calculate, if downscaling of an EC deployment is feasible based on current disk consumption",
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "deployment",
-						Aliases:  []string{"d"},
-						Usage:    "Name of the deployment in Elastic Cloud, e.g. my-deployment",
-						Local:    true,
-						Required: true,
+					&cli.BoolFlag{
+						Name:    "exit-code",
+						Aliases: []string{"e"},
+						Usage:   "With this flag provided, the exit code will be set to none 0, if downscaling is recommended",
+						Value:   false,
+						Local:   true,
 					},
-					&cli.StringFlag{
-						Name:  "username",
-						Usage: "Username used to authenticate against Elasticsearch",
+					&cli.Float64Flag{
+						Name:  "headroom-pct",
+						Usage: "Required available headroom in percent after downscale for the downscale to be recommended",
+						Value: 25.0,
 						Local: true,
-					},
-					&cli.StringFlag{
-						Name:  "password",
-						Usage: "Password used to authenticate against Elasticsearch",
-						Local: true,
-					},
-					&cli.StringFlag{
-						Name:     "region",
-						Aliases:  []string{"r"},
-						Usage:    "Deployment region of the Elastic Cloud deployment, e.g. azure-westeurope",
-						Local:    true,
-						Required: true,
 					},
 					&cli.StringFlag{
 						Name:     "profile",
@@ -56,12 +45,6 @@ func run(ctx context.Context, args []string) error {
 						Local:    true,
 						Required: true,
 					},
-					&cli.Float64Flag{
-						Name:  "headroom-pct",
-						Usage: "Required available headroom in percent after downscale for the downscale to be recommended",
-						Value: 25.0,
-						Local: true,
-					},
 					&cli.BoolFlag{
 						Name:    "recommend-zone-change",
 						Aliases: []string{"e"},
@@ -69,20 +52,66 @@ func run(ctx context.Context, args []string) error {
 						Value:   false,
 						Local:   true,
 					},
-					&cli.BoolFlag{
-						Name:    "exit-code",
-						Aliases: []string{"e"},
-						Usage:   "With this flag provided, the exit code will be set to none 0, if downscaling is recommended",
-						Value:   false,
-						Local:   true,
-					},
 				},
 				Action: downscale,
 			},
 			{
-				Name:   "regions",
-				Usage:  "return list of Elastic Cloud regions",
-				Action: listRegions,
+				Name:  "ilm",
+				Usage: "commands to interact with ilm managed indices",
+				Commands: []*cli.Command{
+					{
+						Name:  "list",
+						Usage: "list ilm managed indices filtered by phase",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "phase",
+								Aliases: []string{"p"},
+								Usage:   "Filter to only include indices in the given phase",
+							},
+							&cli.StringSliceFlag{
+								Name:    "sort",
+								Aliases: []string{"s"},
+								Usage:   "Sort indices by the given columns, allowed columns are: age, size",
+							},
+							&cli.StringFlag{
+								Name:  "min-size",
+								Usage: "Minimum size of index in order to be contained in the result, supported units: k, m, g, t, p",
+							},
+							&cli.IntFlag{
+								Name:  "min-age-days",
+								Usage: "Minimum age of index in days in order to be contained in the result",
+							},
+						},
+						Action: ilmList,
+					},
+					{
+						Name:  "move",
+						Usage: "move ilm managed index to a different phase",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "dry-run",
+								Aliases: []string{"n"},
+								Usage:   "Dry run, don't actually execute move operation",
+							},
+							&cli.BoolFlag{
+								Name:    "force",
+								Aliases: []string{"f"},
+								Usage:   "Try to move the index to the new phase even with pre condition checks failing",
+							},
+							&cli.StringFlag{
+								Name:     "index-pattern",
+								Usage:    "Name of the index which should be moved to an other ILM tier",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "target-phase",
+								Usage:    "Name of the phase the index should be moved to, valid values: hot, warm, cold, frozen, delete",
+								Required: true,
+							},
+						},
+						Action: ilmMove,
+					},
+				},
 			},
 			{
 				Name:  "profiles",
@@ -98,8 +127,33 @@ func run(ctx context.Context, args []string) error {
 				},
 				Action: listProfiles,
 			},
+			{
+				Name:   "regions",
+				Usage:  "return list of Elastic Cloud regions",
+				Action: listRegions,
+			},
 		},
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "deployment",
+				Aliases:  []string{"d"},
+				Usage:    "Name of the deployment in Elastic Cloud, e.g. my-deployment",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "password",
+				Usage: "Password used to authenticate against Elasticsearch",
+			},
+			&cli.StringFlag{
+				Name:     "region",
+				Aliases:  []string{"r"},
+				Usage:    "Deployment region of the Elastic Cloud deployment, e.g. azure-westeurope",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:  "username",
+				Usage: "Username used to authenticate against Elasticsearch",
+			},
 			&cli.BoolFlag{
 				Name:    "verbose",
 				Aliases: []string{"v"},
