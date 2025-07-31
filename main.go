@@ -89,9 +89,24 @@ func run(ctx context.Context, args []string) error {
 						Usage: "move ilm managed index to a different phase",
 						Flags: []cli.Flag{
 							&cli.BoolFlag{
+								Name:    "dry-run",
+								Aliases: []string{"n"},
+								Usage:   "Dry run, don't actually execute move operation",
+							},
+							&cli.BoolFlag{
 								Name:    "force",
 								Aliases: []string{"f"},
 								Usage:   "Try to move the index to the new phase even with pre condition checks failing",
+							},
+							&cli.StringFlag{
+								Name:     "index-pattern",
+								Usage:    "Name of the index which should be moved to an other ILM tier",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "target-phase",
+								Usage:    "Name of the phase the index should be moved to, valid values: hot, warm, cold, frozen, delete",
+								Required: true,
 							},
 						},
 						Action: ilmMove,
