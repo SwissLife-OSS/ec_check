@@ -97,6 +97,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 		phase  string
 		action string
 		step   string
+		policy string
 		age    time.Duration
 		size   int64
 	}
@@ -128,7 +129,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 			continue
 		}
 
-		indexILM = append(indexILM, indexDetails{name: index, phase: *managed.Phase, action: *managed.Action, step: *managed.Step, age: age, size: size})
+		indexILM = append(indexILM, indexDetails{name: index, phase: *managed.Phase, action: *managed.Action, step: *managed.Step, policy: *managed.Policy, age: age, size: size})
 	}
 
 	// Apply the sort criteria as less functions controlled by:
@@ -181,12 +182,12 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 
 	data := make([][]string, 0, len(indexILM))
 	for _, item := range indexILM {
-		data = append(data, []string{item.name, item.phase, item.action, item.step, formatDuration(item.age), units.BytesSize(float64(item.size))})
+		data = append(data, []string{item.name, item.phase, item.action, item.step, item.policy, formatDuration(item.age), units.BytesSize(float64(item.size))})
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.Header([]string{
-		"Index", "Phase", "Action", "Step", "Age", "Size",
+		"Index", "Phase", "Action", "Step", "Policy", "Age", "Size",
 	})
 	err = table.Bulk(data)
 	if err != nil {
