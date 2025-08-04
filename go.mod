@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/docker/go-units v0.5.0
-	github.com/elastic/go-elasticsearch/v8 v8.18.1
+	github.com/elastic/go-elasticsearch/v8 v8.19.0
 	github.com/olekukonko/tablewriter v1.0.8
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v3 v3.3.8
