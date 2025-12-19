@@ -71,11 +71,15 @@ func run(ctx context.Context, args []string) error {
 							&cli.StringSliceFlag{
 								Name:    "sort",
 								Aliases: []string{"s"},
-								Usage:   "Sort indices by the given columns, allowed columns are: age, size",
+								Usage:   "Sort indices by the given columns, allowed columns are: age, pri-size, total-size",
 							},
 							&cli.StringFlag{
-								Name:  "min-size",
-								Usage: "Minimum size of index in order to be contained in the result, supported units: k, m, g, t, p",
+								Name:  "min-total-size",
+								Usage: "Minimum total size (primary shard + replicas) of index in order to be contained in the result, supported units: k, m, g, t, p",
+							},
+							&cli.StringFlag{
+								Name:  "min-pri-size",
+								Usage: "Minimum primary shard size of index in order to be contained in the result, supported units: k, m, g, t, p",
 							},
 							&cli.IntFlag{
 								Name:  "min-age-days",

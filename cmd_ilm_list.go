@@ -27,7 +27,8 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 
 	phase := cmd.String("phase")
 	sortColumns := cmd.StringSlice("sort")
-	minSizeStr := cmd.String("min-size")
+	minPriSizeStr := cmd.String("min-pri-size")
+	minTotalSizeStr := cmd.String("min-total-size")
 	minAge := time.Duration(cmd.Int("min-age-days")) * 24 * time.Hour
 
 	if !isRegionValid(region) {
@@ -39,17 +40,25 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf(`invalid region, expected format "<provider>-<region>", e.g. "azure-westeurope"`)
 	}
 
-	allowedSortColumns := []string{"age", "size"}
+	allowedSortColumns := []string{"age", "pri-size", "total-size"}
 	for _, sortColumn := range sortColumns {
 		if !slices.Contains(allowedSortColumns, sortColumn) {
 			return fmt.Errorf("column %q is not allowed for sorting, use one of %v", sortColumn, allowedSortColumns)
 		}
 	}
 
-	var minSize int64
 	var err error
-	if minSizeStr != "" {
-		minSize, err = units.FromHumanSize(minSizeStr)
+	var minPriSize int64
+	if minPriSizeStr != "" {
+		minPriSize, err = units.FromHumanSize(minPriSizeStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse minimum size: %w", err)
+		}
+	}
+
+	var minTotalSize int64
+	if minTotalSizeStr != "" {
+		minTotalSize, err = units.FromHumanSize(minTotalSizeStr)
 		if err != nil {
 			return fmt.Errorf("failed to parse minimum size: %w", err)
 		}
@@ -71,20 +80,28 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	indices, err := client.Cat.Indices().H("index", "store.size").Bytes(bytes.B).Do(ctx)
+	indices, err := client.Cat.Indices().H("index", "store.size", "pri.store.size").Bytes(bytes.B).Do(ctx)
 	if err != nil {
 		return err
 	}
 
-	sizes := make(map[string]int64, len(indices))
+	totalSizes := make(map[string]int64, len(indices))
+	priSizes := make(map[string]int64, len(indices))
 
 	for _, index := range indices {
-		size, err := strconv.ParseInt(*index.StoreSize, 10, 64)
+		totalSize, err := strconv.ParseInt(*index.StoreSize, 10, 64)
 		if err != nil {
 			return err
 		}
 
-		sizes[*index.Index] = size
+		totalSizes[*index.Index] = totalSize
+
+		priSize, err := strconv.ParseInt(*index.PriStoreSize, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		priSizes[*index.Index] = priSize
 	}
 
 	ilms, err := client.Ilm.ExplainLifecycle("_all").OnlyManaged(true).Do(ctx)
@@ -93,13 +110,14 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	type indexDetails struct {
-		name   string
-		phase  string
-		action string
-		step   string
-		policy string
-		age    time.Duration
-		size   int64
+		name      string
+		phase     string
+		action    string
+		step      string
+		policy    string
+		age       time.Duration
+		priSize   int64
+		totalSize int64
 	}
 
 	indexILM := make([]indexDetails, 0, len(ilms.Indices))
@@ -114,9 +132,15 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 			continue
 		}
 
-		size := sizes[index]
+		priSize := priSizes[index]
 
-		if size < minSize {
+		if priSize < minPriSize {
+			continue
+		}
+
+		totalSize := totalSizes[index]
+
+		if totalSize < minTotalSize {
 			continue
 		}
 
@@ -129,7 +153,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 			continue
 		}
 
-		indexILM = append(indexILM, indexDetails{name: index, phase: *managed.Phase, action: *managed.Action, step: *managed.Step, policy: *managed.Policy, age: age, size: size})
+		indexILM = append(indexILM, indexDetails{name: index, phase: *managed.Phase, action: *managed.Action, step: *managed.Step, policy: *managed.Policy, age: age, priSize: priSize, totalSize: totalSize})
 	}
 
 	// Apply the sort criteria as less functions controlled by:
@@ -157,10 +181,19 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 				return false, false
 			})
 
-		case "size":
+		case "pri-size":
 			lessFuncs = append(lessFuncs, func(i, j int) (final bool, less bool) {
-				if indexILM[i].size != indexILM[j].size {
-					return true, indexILM[i].size > indexILM[j].size
+				if indexILM[i].priSize != indexILM[j].priSize {
+					return true, indexILM[i].priSize > indexILM[j].priSize
+				}
+
+				return false, false
+			})
+
+		case "total-size":
+			lessFuncs = append(lessFuncs, func(i, j int) (final bool, less bool) {
+				if indexILM[i].totalSize != indexILM[j].totalSize {
+					return true, indexILM[i].totalSize > indexILM[j].totalSize
 				}
 
 				return false, false
@@ -182,12 +215,12 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 
 	data := make([][]string, 0, len(indexILM))
 	for _, item := range indexILM {
-		data = append(data, []string{item.name, item.phase, item.action, item.step, item.policy, formatDuration(item.age), units.BytesSize(float64(item.size))})
+		data = append(data, []string{item.name, item.phase, item.action, item.step, item.policy, formatDuration(item.age), units.BytesSize(float64(item.priSize)), units.BytesSize(float64(item.totalSize))})
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.Header([]string{
-		"Index", "Phase", "Action", "Step", "Policy", "Age", "Size",
+		"Index", "Phase", "Action", "Step", "Policy", "Age", "Pri Size", "Total Size",
 	})
 	err = table.Bulk(data)
 	if err != nil {
