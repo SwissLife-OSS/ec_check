@@ -68,6 +68,11 @@ func run(ctx context.Context, args []string) error {
 								Aliases: []string{"p"},
 								Usage:   "Filter to only include indices in the given phase",
 							},
+							&cli.StringFlag{
+								Name:    "ilm-policy",
+								Aliases: []string{"i"},
+								Usage:   "Filter to only include indices with the given ILM policy attached",
+							},
 							&cli.StringSliceFlag{
 								Name:    "sort",
 								Aliases: []string{"s"},

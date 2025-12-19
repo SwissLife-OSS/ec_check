@@ -26,6 +26,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 	password := cmd.String("password")
 
 	phase := cmd.String("phase")
+	ilmPolicy := cmd.String("ilm-policy")
 	sortColumns := cmd.StringSlice("sort")
 	minSizeStr := cmd.String("min-size")
 	minAge := time.Duration(cmd.Int("min-age-days")) * 24 * time.Hour
@@ -111,6 +112,10 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		if phase != "" && phase != *managed.Phase {
+			continue
+		}
+
+		if ilmPolicy != "" && ilmPolicy != *managed.Policy {
 			continue
 		}
 
