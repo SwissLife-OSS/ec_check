@@ -29,6 +29,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 
 	action := cmd.String("action")
 	phase := cmd.String("phase")
+	ilmPolicy := cmd.String("ilm-policy")
 	sortColumns := cmd.StringSlice("sort")
 	minPriSizeStr := cmd.String("min-pri-size")
 	minTotalSizeStr := cmd.String("min-total-size")
@@ -137,6 +138,10 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		if phase != "" && phase != *managed.Phase {
+			continue
+		}
+
+		if ilmPolicy != "" && ilmPolicy != *managed.Policy {
 			continue
 		}
 
