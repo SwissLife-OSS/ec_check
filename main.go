@@ -64,6 +64,11 @@ func run(ctx context.Context, args []string) error {
 						Usage: "list ilm managed indices filtered by phase",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
+								Name:    "action",
+								Aliases: []string{"a"},
+								Usage:   "Filter to only include indices in the given action",
+							},
+							&cli.StringFlag{
 								Name:    "phase",
 								Aliases: []string{"p"},
 								Usage:   "Filter to only include indices in the given phase",
