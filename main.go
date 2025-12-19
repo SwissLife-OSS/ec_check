@@ -85,6 +85,11 @@ func run(ctx context.Context, args []string) error {
 								Name:  "min-age-days",
 								Usage: "Minimum age of index in days in order to be contained in the result",
 							},
+							&cli.StringFlag{
+								Name:    "format",
+								Aliases: []string{"f"},
+								Usage:   "Format for the result: table, compact (default: table)",
+							},
 						},
 						Action: ilmList,
 					},
