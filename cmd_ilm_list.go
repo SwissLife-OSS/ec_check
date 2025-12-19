@@ -25,6 +25,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 	username := cmd.String("username")
 	password := cmd.String("password")
 
+	action := cmd.String("action")
 	phase := cmd.String("phase")
 	sortColumns := cmd.StringSlice("sort")
 	minSizeStr := cmd.String("min-size")
@@ -107,6 +108,10 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 	for index, ilm := range ilms.Indices {
 		managed, ok := ilm.(*types.LifecycleExplainManaged)
 		if !ok {
+			continue
+		}
+
+		if action != "" && action != *managed.Action {
 			continue
 		}
 
