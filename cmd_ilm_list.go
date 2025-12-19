@@ -16,6 +16,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/bytes"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/urfave/cli/v3"
 )
 
@@ -29,6 +31,7 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 	sortColumns := cmd.StringSlice("sort")
 	minSizeStr := cmd.String("min-size")
 	minAge := time.Duration(cmd.Int("min-age-days")) * 24 * time.Hour
+	format := cmd.String("format")
 
 	if !isRegionValid(region) {
 		return fmt.Errorf("region %q is not a known Elastic Cloud region", region)
@@ -185,7 +188,29 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 		data = append(data, []string{item.name, item.phase, item.action, item.step, item.policy, formatDuration(item.age), units.BytesSize(float64(item.size))})
 	}
 
-	table := tablewriter.NewWriter(os.Stdout)
+	opts := []tablewriter.Option{
+		tablewriter.WithRenderer(
+			renderer.NewBlueprint(),
+		),
+	}
+	switch format {
+	case "compact":
+		opts = []tablewriter.Option{
+			tablewriter.WithRenderer(
+				renderer.NewBlueprint(
+					tw.Rendition{
+						Borders: tw.BorderNone,
+						Settings: tw.Settings{
+							Lines:      tw.LinesNone,
+							Separators: tw.SeparatorsNone,
+						},
+					},
+				),
+			),
+		}
+	}
+
+	table := tablewriter.NewTable(os.Stdout, opts...)
 	table.Header([]string{
 		"Index", "Phase", "Action", "Step", "Policy", "Age", "Size",
 	})
