@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/docker/go-units v0.5.0
-	github.com/elastic/go-elasticsearch/v8 v8.18.1
+	github.com/elastic/go-elasticsearch/v8 v8.19.1
 	github.com/olekukonko/tablewriter v1.0.8
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.3.8
@@ -12,7 +12,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/elastic/elastic-transport-go/v8 v8.7.0 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.8.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
