@@ -55,12 +55,12 @@ type Recommendation struct {
 }
 
 func (r Recommendation) String() string {
-	str := strings.Builder{}
+	str := &strings.Builder{}
 
-	str.WriteString(fmt.Sprintf("Tier: %s\n", r.tier))
-	str.WriteString(fmt.Sprintf("Current Config: %d nodes with %s disk (%s memory) each = %s total\n", r.currentNodes, units.BytesSize(r.currentDiskPerNode), units.BytesSize(r.currentMemoryPerNode), units.BytesSize(r.currentDiskTotal)))
+	fmt.Fprintf(str, "Tier: %s\n", r.tier)
+	fmt.Fprintf(str, "Current Config: %d nodes with %s disk (%s memory) each = %s total\n", r.currentNodes, units.BytesSize(r.currentDiskPerNode), units.BytesSize(r.currentMemoryPerNode), units.BytesSize(r.currentDiskTotal))
 
-	str.WriteString(fmt.Sprintf("Current Consumption: %s\n", units.BytesSize(r.currentConsumption)))
+	fmt.Fprintf(str, "Current Consumption: %s\n", units.BytesSize(r.currentConsumption))
 
 	if r.isAlreadySmallest {
 		str.WriteString("Already on smallest size of the tier, no downsizing possible.")
@@ -72,7 +72,7 @@ func (r Recommendation) String() string {
 		return str.String()
 	}
 
-	str.WriteString(fmt.Sprintf("Next smaller: %d nodes with %s disk (%s memory) each = %s total\n", r.smallerNodes, units.BytesSize(r.smallerDiskPerNode), units.BytesSize(r.smallerMemoryPerNode), units.BytesSize(r.smallerDiskTotal)))
+	fmt.Fprintf(str, "Next smaller: %d nodes with %s disk (%s memory) each = %s total\n", r.smallerNodes, units.BytesSize(r.smallerDiskPerNode), units.BytesSize(r.smallerMemoryPerNode), units.BytesSize(r.smallerDiskTotal))
 
 	freeAfterDownsize := "does not fit"
 	freeAfterDownsizePct := "- %"
@@ -81,9 +81,9 @@ func (r Recommendation) String() string {
 		freeAfterDownsizePct = fmt.Sprintf("%.1f%%", r.smallerFreeAfterDownsizePct)
 	}
 
-	str.WriteString(fmt.Sprintf("Free space after downsize: %s (%s)\n", freeAfterDownsize, freeAfterDownsizePct))
+	fmt.Fprintf(str, "Free space after downsize: %s (%s)\n", freeAfterDownsize, freeAfterDownsizePct)
 
-	str.WriteString(fmt.Sprintf("Downsize of tier recommended: %t", r.isDownscalingRecommended))
+	fmt.Fprintf(str, "Downsize of tier recommended: %t", r.isDownscalingRecommended)
 
 	return str.String()
 }
