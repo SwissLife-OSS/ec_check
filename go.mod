@@ -7,7 +7,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.19.3
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.7.0
+	github.com/urfave/cli/v3 v3.8.0
 )
 
 require (
