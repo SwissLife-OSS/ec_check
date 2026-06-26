@@ -1,6 +1,6 @@
 module github.com/SwissLife-OSS/ec_check
 
-go 1.24.4
+go 1.25.11
 
 require (
 	github.com/docker/go-units v0.5.0
