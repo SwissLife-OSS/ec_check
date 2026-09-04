@@ -1,5 +1,4 @@
 ---
-
 name: Main
 
 on:
@@ -10,13 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
-
   main:
     name: Main Process
     runs-on: ubuntu-latest
     env:
       GO_VERSION: "stable"
-      GOLANGCI_LINT_VERSION: v2.12.2
+      GOLANGCI_LINT_VERSION: v2.13.2
       CGO_ENABLED: 0
 
     steps:
