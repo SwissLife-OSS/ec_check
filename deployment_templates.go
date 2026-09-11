@@ -114,6 +114,11 @@ func getTierSizes(region string, profile string) (TierSizes, error) {
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch deployment template %q for region %q: unexpected status %s: %s",
+			profile, region, resp.Status, truncateForError(body))
+	}
+
 	var deploymentTemplate DeploymentTemplate
 	err = json.Unmarshal(body, &deploymentTemplate)
 	if err != nil {
