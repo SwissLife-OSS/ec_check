@@ -490,3 +490,47 @@ func Test_tierFromNodeRoleInvalid(t *testing.T) {
 		})
 	}
 }
+
+func Test_calcDownscaleRecommendationSmallestSizeWithEvenNodeCount(t *testing.T) {
+	// A tier already running the smallest instance configuration with an even
+	// node count must not index past the beginning of the size list.
+	for _, nodeCount := range []int{2, 4, 6} {
+		t.Run(fmt.Sprintf("%d nodes", nodeCount), func(t *testing.T) {
+			allocations := make([]Allocation, 0, nodeCount)
+			for range nodeCount {
+				allocations = append(allocations, Allocation{
+					NodeRole:  "h",
+					DiskUsed:  "1",
+					DiskTotal: fmt.Sprintf("%.0f", 1024*35.0*mibMultiplier),
+				})
+			}
+
+			var recommendations Recommendations
+			require.NotPanics(t, func() {
+				recommendations = calcDownscaleRecommendation(allocations, tierSizes, 25.0, true)
+			})
+
+			require.True(t, recommendations[tierHot].isAlreadySmallest, "already smallest")
+			require.False(t, recommendations[tierHot].isDownscalingRecommended, "is downscaling recommended")
+		})
+	}
+}
+
+func Test_tierConfigMappingSkipsTiersWithoutSizes(t *testing.T) {
+	// tierSizes only contains the hot tier, so a warm allocation has no sizing
+	// information and must be skipped instead of panicking.
+	allocations := []Allocation{
+		{
+			NodeRole:  "w",
+			DiskUsed:  "1",
+			DiskTotal: fmt.Sprintf("%.0f", 1024*35.0*mibMultiplier),
+		},
+	}
+
+	var tiers map[Tier]tierConfig
+	require.NotPanics(t, func() {
+		tiers = tierConfigMapping(allocations, tierSizes)
+	})
+
+	require.NotContains(t, tiers, tierWarm)
+}

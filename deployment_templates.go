@@ -125,6 +125,15 @@ func getTierSizes(region string, profile string) (TierSizes, error) {
 		return nil, err
 	}
 
+	tierSizes := tierSizesFromTemplate(deploymentTemplate)
+	if len(tierSizes) == 0 {
+		return nil, fmt.Errorf("no data tier instance configurations found in deployment template %q for region %q", profile, region)
+	}
+
+	return tierSizes, nil
+}
+
+func tierSizesFromTemplate(deploymentTemplate DeploymentTemplate) TierSizes {
 	tierSizes := make(TierSizes, 4)
 	for _, template := range deploymentTemplate.InstanceConfigurations {
 		tierMatches := tierRegexp.FindStringSubmatch(template.ID)
@@ -133,6 +142,10 @@ func getTierSizes(region string, profile string) (TierSizes, error) {
 		}
 
 		tier := Tier(tierMatches[1])
+
+		if len(template.DiscreteSizes.Sizes) == 0 {
+			continue
+		}
 
 		sizes := make([]Size, 0, len(template.DiscreteSizes.Sizes)+maxNodesPerTier-1)
 
@@ -146,13 +159,15 @@ func getTierSizes(region string, profile string) (TierSizes, error) {
 			)
 		}
 
-		fullNodeDiskSize := float64(template.DiscreteSizes.Sizes[len(template.DiscreteSizes.Sizes)-1]) * template.StorageMultiplier * mibMultiplier
+		lastDiscreteSize := float64(template.DiscreteSizes.Sizes[len(template.DiscreteSizes.Sizes)-1])
+		fullNodeMemorySize := lastDiscreteSize * mibMultiplier
+		fullNodeDiskSize := lastDiscreteSize * template.StorageMultiplier * mibMultiplier
 
 		// Full nodes, adding adding 64 MB of memory each to the cluster.
 		for size := 2.0; size <= maxNodesPerTier; size++ {
 			sizes = append(sizes,
 				Size{
-					Memory: size,
+					Memory: size * fullNodeMemorySize,
 					Disk:   size * fullNodeDiskSize,
 				},
 			)
@@ -161,5 +176,16 @@ func getTierSizes(region string, profile string) (TierSizes, error) {
 		tierSizes[tier] = sizes
 	}
 
-	return tierSizes, nil
+	return tierSizes
+}
+
+func truncateForError(body []byte) string {
+	const maxLen = 256
+
+	s := strings.TrimSpace(string(body))
+	if len(s) > maxLen {
+		return s[:maxLen] + "..."
+	}
+
+	return s
 }
