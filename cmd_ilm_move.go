@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
@@ -22,8 +21,9 @@ func ilmMove(ctx context.Context, cmd *cli.Command) error {
 	indexPattern := cmd.String("index-pattern")
 	targetPhase := cmd.String("target-phase")
 
-	if !isRegionValid(region) {
-		return fmt.Errorf("region %q is not a known Elastic Cloud region", region)
+	provider, providerRegion, ok := regionProviderParts(region)
+	if !ok {
+		return fmt.Errorf("region %q is not a known Elastic Cloud region, use %q to list the known regions", region, "ec_check regions")
 	}
 
 	var dryRunPrefix string
@@ -35,14 +35,6 @@ func ilmMove(ctx context.Context, cmd *cli.Command) error {
 	if !slices.Contains(phases, targetPhase) {
 		return fmt.Errorf("target-phase %q is invalid, valid values are: %v", targetPhase, phases)
 	}
-
-	regionParts := strings.Split(region, "-")
-	if len(regionParts) != 2 {
-		return fmt.Errorf(`invalid region, expected format "<provider>-<region>", e.g. "azure-westeurope"`)
-	}
-
-	provider := regionParts[0]
-	providerRegion := regionParts[1]
 
 	deploymentURL := fmt.Sprintf("https://%s.es.%s.%s.elastic-cloud.com", deployment, providerRegion, provider)
 
