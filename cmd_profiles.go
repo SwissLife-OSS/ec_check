@@ -15,8 +15,8 @@ type DeploymentTemplates []DeploymentTemplate
 
 func listProfiles(ctx context.Context, cmd *cli.Command) error {
 	region := cmd.String("region")
-	if !isRegionValid(region) {
-		return fmt.Errorf("region %q is not a known Elastic Cloud region", region)
+	if _, _, ok := regionProviderParts(region); !ok {
+		return fmt.Errorf("region %q is not a known Elastic Cloud region, use %q to list the known regions", region, "ec_check regions")
 	}
 
 	deploymentTemplatesURL := fmt.Sprintf("https://api.elastic-cloud.com/api/v1/deployments/templates?region=%s", region)

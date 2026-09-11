@@ -36,13 +36,9 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 	minAge := time.Duration(cmd.Int("min-age-days")) * 24 * time.Hour
 	format := cmd.String("format")
 
-	if !isRegionValid(region) {
-		return fmt.Errorf("region %q is not a known Elastic Cloud region", region)
-	}
-
-	regionParts := strings.Split(region, "-")
-	if len(regionParts) != 2 {
-		return fmt.Errorf(`invalid region, expected format "<provider>-<region>", e.g. "azure-westeurope"`)
+	provider, providerRegion, ok := regionProviderParts(region)
+	if !ok {
+		return fmt.Errorf("region %q is not a known Elastic Cloud region, use %q to list the known regions", region, "ec_check regions")
 	}
 
 	allowedSortColumns := []string{"age", "pri-size", "total-size"}
@@ -68,9 +64,6 @@ func ilmList(ctx context.Context, cmd *cli.Command) error {
 			return fmt.Errorf("failed to parse minimum size: %w", err)
 		}
 	}
-
-	provider := regionParts[0]
-	providerRegion := regionParts[1]
 
 	deploymentURL := fmt.Sprintf("https://%s.es.%s.%s.elastic-cloud.com", deployment, providerRegion, provider)
 

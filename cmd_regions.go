@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -250,8 +251,6 @@ var azureRegions = []region{
 	},
 }
 
-var allRegions = append(awsRegions, append(gcpRegions, azureRegions...)...)
-
 func listRegions(ctx context.Context, cmd *cli.Command) error {
 	fmt.Fprintf(cmd.Writer, "Regions:\n")
 	fmt.Fprintf(cmd.Writer, "  AWS:\n")
@@ -272,12 +271,23 @@ func listRegions(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func isRegionValid(region string) bool {
-	for _, r := range allRegions {
-		if r.region == region {
-			return true
+func regionProviderParts(name string) (provider string, providerRegion string, ok bool) {
+	providers := []struct {
+		name    string
+		regions []region
+	}{
+		{"aws", awsRegions},
+		{"gcp", gcpRegions},
+		{"azure", azureRegions},
+	}
+
+	for _, p := range providers {
+		for _, r := range p.regions {
+			if r.region == name {
+				return p.name, strings.TrimPrefix(name, p.name+"-"), true
+			}
 		}
 	}
 
-	return false
+	return "", "", false
 }

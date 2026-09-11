@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -18,17 +17,10 @@ func downscale(ctx context.Context, cmd *cli.Command) error {
 	recommendZoneChange := cmd.Bool("recommend-zone-change")
 	exitCode := cmd.Bool("exit-code")
 
-	if !isRegionValid(region) {
-		return fmt.Errorf("region %q is not a known Elastic Cloud region", region)
+	provider, providerRegion, ok := regionProviderParts(region)
+	if !ok {
+		return fmt.Errorf("region %q is not a known Elastic Cloud region, use %q to list the known regions", region, "ec_check regions")
 	}
-
-	regionParts := strings.Split(region, "-")
-	if len(regionParts) != 2 {
-		return fmt.Errorf(`invalid region, expected format "<provider>-<region>", e.g. "azure-westeurope"`)
-	}
-
-	provider := regionParts[0]
-	providerRegion := regionParts[1]
 
 	tierDiskSizes, err := getTierSizes(region, profile)
 	if err != nil {

@@ -230,26 +230,30 @@ func calcDownscaleRecommendationWithZoneChange(allocations []Allocation, tierSiz
 			steps = 1
 		}
 		for {
+			if tierCfg.NodeSizeIndex-steps < 0 {
+				// No smaller instance configuration is available for the next step.
+				recommend.isAlreadySmallest = recommend.smallerNodes == recommend.currentNodes
+				recommend.isDownscalingRecommended = !recommend.isAlreadySmallest
+				break
+			}
+
+			smallerSize := tierSizes[tier][tierCfg.NodeSizeIndex-steps]
+
 			var optimizedSmallerNodeCount float64
-			var optimizedSmallerSizeDisk float64
-			var optimizedSmallerSizeMemory float64
 			switch {
 			case recommend.smallerNodes == 1:
 				// if current node count == 1, optimal next smaller is same smaller size with 1 node
 				optimizedSmallerNodeCount = 1.0
-				optimizedSmallerSizeDisk = tierSizes[tier][tierCfg.NodeSizeIndex-steps].Disk
-				optimizedSmallerSizeMemory = tierSizes[tier][tierCfg.NodeSizeIndex-steps].Memory
 			case recommend.smallerNodes%2 == 0:
 				// if current node count is even, optimal next smaller is next smaller size with 3 nodes
 				optimizedSmallerNodeCount = 3.0
-				optimizedSmallerSizeDisk = tierSizes[tier][tierCfg.NodeSizeIndex-steps].Disk
-				optimizedSmallerSizeMemory = tierSizes[tier][tierCfg.NodeSizeIndex-steps].Memory
 			default:
 				// if current node count is odd, optimal next smaller is same node size with 2 nodes
 				optimizedSmallerNodeCount = 2.0
-				optimizedSmallerSizeDisk = tierSizes[tier][tierCfg.NodeSizeIndex-steps].Disk
-				optimizedSmallerSizeMemory = tierSizes[tier][tierCfg.NodeSizeIndex-steps].Memory
 			}
+
+			optimizedSmallerSizeDisk := smallerSize.Disk
+			optimizedSmallerSizeMemory := smallerSize.Memory
 
 			optimizedFreeAfterDownsize := (optimizedSmallerNodeCount * optimizedSmallerSizeDisk) - tierCfg.TotalDiskUsage
 			optimizedFreeAfterDownsizePct := 100.0 / (optimizedSmallerNodeCount * optimizedSmallerSizeDisk) * optimizedFreeAfterDownsize
@@ -300,6 +304,10 @@ func tierConfigMapping(allocations []Allocation, tierSizes TierSizes) map[Tier]t
 		}
 
 		tier := tierFromNodeRole(alloc.NodeRole)
+
+		if len(tierSizes[tier]) == 0 {
+			continue
+		}
 
 		diskTotal, _ := strconv.ParseFloat(alloc.DiskTotal, 64)
 
